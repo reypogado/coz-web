@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { format } from "date-fns";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import type { CartItem } from "../models/CartItem";
 
 type Transaction = {
@@ -19,6 +21,8 @@ export default function ReportScreen() {
   const [sizeFilter, setSizeFilter] = useState("");
   const [milkFilter, setMilkFilter] = useState("");
   const [tempFilter, setTempFilter] = useState("");
+  const [sortAsc, setSortAsc] = useState(true);
+
   const [summary, setSummary] = useState({
     totalSales: 0,
     totalItems: 0,
@@ -36,12 +40,10 @@ export default function ReportScreen() {
 
   const fetchTransactions = async () => {
     const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0); // beginning of the day
+    start.setHours(0, 0, 0, 0);
 
     const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999); // end of the day
-
-    console.log(start, end)
+    end.setHours(23, 59, 59, 999);
 
     const q = query(
       collection(db, "transactions"),
@@ -86,6 +88,38 @@ export default function ReportScreen() {
 
     setTransactions(data);
     setSummary({ totalSales, totalItems, totalTransactions: data.length });
+  };
+
+  const exportToExcel = () => {
+    const exportData = transactions.map((tx) => ({
+      Date: format(tx.created_at, "yyyy-MM-dd HH:mm"),
+      Customer: tx.customer_name,
+      "Total Price": tx.total_price,
+      Items: tx.items
+        .map(
+          (item) =>
+            `${item.name} x${item.quantity} (${item.temperature}, ${item.milk}, ${item.size})`
+        )
+        .join(" | "),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(blob, `Transaction_Report_${startDate}_to_${endDate}.xlsx`);
+  };
+
+  const sortByCustomer = () => {
+    const sorted = [...transactions].sort((a, b) => {
+      const nameA = a.customer_name.toLowerCase();
+      const nameB = b.customer_name.toLowerCase();
+      return sortAsc ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+    });
+    setSortAsc(!sortAsc);
+    setTransactions(sorted);
   };
 
   return (
@@ -134,6 +168,15 @@ export default function ReportScreen() {
         </select>
       </div>
 
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={exportToExcel}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded text-sm"
+        >
+          Export to Excel
+        </button>
+      </div>
+
       {!startDate || !endDate ? (
         <p className="text-gray-500 mt-4">Please select a start and end date to view reports.</p>
       ) : (
@@ -158,7 +201,12 @@ export default function ReportScreen() {
               <thead>
                 <tr className="bg-gray-200 text-sm">
                   <th className="p-2 text-left">Date</th>
-                  <th className="p-2 text-left">Customer</th>
+                  <th
+                    className="p-2 text-left cursor-pointer"
+                    onClick={sortByCustomer}
+                  >
+                    Customer {sortAsc ? "▲" : "▼"}
+                  </th>
                   <th className="p-2 text-left">Total</th>
                   <th className="p-2 text-left">Items</th>
                 </tr>
