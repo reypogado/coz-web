@@ -8,9 +8,12 @@ import type { CartItem } from "../models/CartItem";
 
 type Transaction = {
   id: string;
+  reference_number: string;
   customer_name: string;
   total_price: number;
   created_at: Date;
+  status: string;
+  payment: string;
   items: CartItem[];
 };
 
@@ -22,6 +25,8 @@ export default function ReportScreen() {
   const [milkFilter, setMilkFilter] = useState("");
   const [tempFilter, setTempFilter] = useState("");
   const [sortAsc, setSortAsc] = useState(true);
+  const [paymentFilter, setPaymentFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   const [summary, setSummary] = useState({
     totalSales: 0,
@@ -36,7 +41,7 @@ export default function ReportScreen() {
       return;
     }
     fetchTransactions();
-  }, [startDate, endDate, sizeFilter, milkFilter, tempFilter]);
+  }, [startDate, endDate, sizeFilter, milkFilter, tempFilter, statusFilter, paymentFilter]);
 
   const fetchTransactions = async () => {
     const start = new Date(startDate);
@@ -72,16 +77,22 @@ export default function ReportScreen() {
         return matchSize && matchMilk && matchTemp;
       });
 
-      if (items.length > 0) {
+      const matchesPayment = !paymentFilter || tx.payment === paymentFilter;
+      const matchesStatus = !statusFilter || tx.status === statusFilter;
+
+      if (items.length > 0 && matchesPayment && matchesStatus) {
         totalSales += tx.total_price;
         totalItems += items.reduce((sum: number, i: any) => sum + i.quantity, 0);
 
         data.push({
           id: doc.id,
+          reference_number: tx.reference_number || "",
           customer_name: tx.customer_name || "N/A",
           total_price: tx.total_price || 0,
           created_at,
           items,
+          status: tx.status || "unpaid",
+          payment: tx.payment || "cash",
         });
       }
     });
@@ -89,6 +100,7 @@ export default function ReportScreen() {
     setTransactions(data);
     setSummary({ totalSales, totalItems, totalTransactions: data.length });
   };
+
 
   const exportToExcel = () => {
     const exportData = transactions.map((tx) => ({
@@ -166,6 +178,25 @@ export default function ReportScreen() {
           <option value="hot">Hot</option>
           <option value="cold">Cold</option>
         </select>
+        <select
+          value={paymentFilter}
+          onChange={(e) => setPaymentFilter(e.target.value)}
+          className="border rounded px-3 py-1"
+        >
+          <option value="">All Payments</option>
+          <option value="cash">Cash</option>
+          <option value="gcash">GCash</option>
+        </select>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="border rounded px-3 py-1"
+        >
+          <option value="">All Statuses</option>
+          <option value="paid">Paid</option>
+          <option value="unpaid">Unpaid</option>
+        </select>
       </div>
 
       <div className="flex justify-end mb-2">
@@ -200,6 +231,7 @@ export default function ReportScreen() {
             <table className="min-w-full bg-white rounded shadow">
               <thead>
                 <tr className="bg-gray-200 text-sm">
+                  <th className="p-2 text-left">Reference Number</th>
                   <th className="p-2 text-left">Date</th>
                   <th
                     className="p-2 text-left cursor-pointer"
@@ -209,11 +241,14 @@ export default function ReportScreen() {
                   </th>
                   <th className="p-2 text-left">Total</th>
                   <th className="p-2 text-left">Items</th>
+                  <th className="p-2 text-left">Payment Method</th>
+                  <th className="p-2 text-left">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.map((tx) => (
                   <tr key={tx.id} className="border-t">
+                    <td className="p-2 text-sm">{tx.reference_number}</td>
                     <td className="p-2 text-sm">
                       {format(tx.created_at, "yyyy-MM-dd HH:mm")}
                     </td>
@@ -226,9 +261,35 @@ export default function ReportScreen() {
                         </div>
                       ))}
                     </td>
+                    <td className="p-2 text-sm">
+                      {tx.payment ? (
+                        <span
+                          className={`px-2 py-1 rounded text-white text-xs ${tx.payment === "cash" ? "bg-yellow-500" : "bg-blue-600"
+                            }`}
+                        >
+                          {tx.payment.toUpperCase()}
+                        </span>
+                      ) : (
+                        ""
+                      )}
+                    </td>
+
+                    <td className="p-2 text-sm">
+                      {tx.status ? (
+                        <span
+                          className={`px-2 py-1 rounded text-white text-xs ${tx.status === "paid" ? "bg-green-600" : "bg-red-600"
+                            }`}
+                        >
+                          {tx.status.toUpperCase()}
+                        </span>
+                      ) : (
+                        ""
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
+
             </table>
           </div>
         </>
