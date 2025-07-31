@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { drinks } from "../data/drinks";
 import type { Drink } from "../data/drinks";
 import CoffeeDetail from "./CoffeeDetail";
