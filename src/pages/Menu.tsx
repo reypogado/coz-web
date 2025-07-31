@@ -9,7 +9,7 @@ type Tab = "coffee" | "non-coffee" | "fruit" | "milkshake";
 export default function Menu() {
   const [tab, setTab] = useState<Tab>("coffee");
   const [selected, setSelected] = useState<Drink | null>(null);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const categories: Tab[] = ["coffee", "non-coffee", "fruit", "milkshake"];
   const filtered = drinks.filter((d) => d.base === tab);
