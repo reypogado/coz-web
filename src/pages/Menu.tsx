@@ -2,6 +2,8 @@ import { useState } from "react";
 import { drinks } from "../data/drinks";
 import type { Drink } from "../data/drinks";
 import CoffeeDetail from "./CoffeeDetail";
+import { getMenuImage } from "../utils/images";
+import logo from '../assets/icon/app_icon.png'
 
 type Tab = "coffee" | "non-coffee" | "fruit" | "milkshake";
 
@@ -39,7 +41,7 @@ export default function Menu() {
         {/* Centered Logo (Full Width) */}
         <div className="bg-primary w-full flex justify-center items-center py-2 rounded">
           <img
-            src="/src/assets/icon/app_icon.png"
+            src={logo}
             alt="Cup of Zion Logo"
             className="h-16 w-auto"
           />
@@ -52,11 +54,10 @@ export default function Menu() {
           <button
             key={c}
             onClick={() => setTab(c)}
-            className={`px-4 py-2 rounded font-semibold transition-all duration-200 ${
-              tab === c
+            className={`px-4 py-2 rounded font-semibold transition-all duration-200 ${tab === c
                 ? "bg-primary text-white shadow-md border border-primary"
                 : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-            }`}
+              }`}
           >
             {c.toUpperCase()}
           </button>
@@ -72,7 +73,7 @@ export default function Menu() {
             onClick={() => setSelected(drink)}
           >
             <img
-              src={`/src/${drink.image}`}
+              src={getMenuImage(drink.image)}
               alt={drink.name}
               className="w-full h-40 object-contain rounded-md"
             />
