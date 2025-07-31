@@ -13,7 +13,7 @@ type Transaction = {
   total_price: number;
   created_at: Date;
   status: string;
-  payment: string;
+  payment: string;  
   items: CartItem[];
 };
 

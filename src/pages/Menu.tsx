@@ -20,7 +20,7 @@ export default function Menu() {
       {/* Header */}
       <div className="mb-5">
         {/* Top Row with Buttons and Logo */}
-        <div className="flex items-center justify-between mb-2">
+        {/* <div className="flex items-center justify-between mb-2">
           <div className="flex gap-2">
             <button
               onClick={() => navigate("/orders")}
@@ -35,7 +35,7 @@ export default function Menu() {
               View Cart
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Centered Logo (Full Width) */}
         <div className="bg-primary w-full flex justify-center items-center py-2 rounded">
